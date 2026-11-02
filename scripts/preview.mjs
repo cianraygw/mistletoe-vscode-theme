@@ -1,12 +1,17 @@
 // Renders a mock VS Code window per theme (syntax via shiki, chrome from the
 // theme's own workbench colours) and screenshots it with headless Chrome.
 import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { createRequire } from 'node:module';
 import { execFileSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHighlighter } from 'shiki';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
+const require = createRequire(import.meta.url);
+const { getHtml } = require('../src/webview.js');
+const { getCountdown, statusText } = require('../src/countdown.js');
+const { DEFAULT_MESSAGES } = require('../src/messages.js');
 const CHROME = process.env.CHROME || '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome';
 
 const code = `// Plan the sleigh route before midnight
@@ -84,10 +89,26 @@ const ICONS = [
   icon('<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><path d="M16.5 3.5v7M13 7h7"/>'),
 ];
 
-function page(theme, codeHtml) {
+const MISTLETOE_ICON = readFileSync(join(root, 'images', 'activity.svg'), 'utf8').replace('<svg ', '<svg width="24" height="24" ');
+
+// The countdown webview as VS Code would show it, with the theme's colours as --vscode-* variables.
+function viewHtml(theme) {
+  const vars = Object.entries(theme.colors).map(([k, v]) => `--vscode-${k.replace(/\./g, '-')}: ${v};`).join(' ');
+  const fonts = `--vscode-font-family: -apple-system, BlinkMacSystemFont, sans-serif; --vscode-font-size: 13px; --vscode-editor-font-family: 'SF Mono', Menlo, monospace;`;
+  const html = getHtml({
+    cspSource: "'self'",
+    nonce: 'preview',
+    state: { target: 'christmasDay', messages: DEFAULT_MESSAGES, snow: true, reduceMotion: 'off', intervalSeconds: 15 },
+  });
+  // Freeze the digit animation so the capture never lands mid-transition.
+  return html
+    .replace('<head>', `<head><style nonce="preview">html { ${vars} ${fonts} } .num.drop { animation: none !important; }</style>`)
+    .replace('<body>', `<body class="vscode-${theme.type}">`);
+}
+
+function page(theme, codeHtml, extras = false) {
   const c = theme.colors;
   const files = [
-    
     { name: 'src', dir: true, open: true, depth: 0 },
     { name: 'elves.ts', depth: 1 },
     { name: 'gifts.json', depth: 1, git: 'gitDecoration.untrackedResourceForeground', badge: 'U' },
@@ -130,7 +151,8 @@ body { width: 1200px; height: 860px; overflow: hidden; background: ${c['editor.b
 .lights i { width: 12px; height: 12px; border-radius: 50%; display: block; }
 .cc { background: ${c['commandCenter.background']}; border: 1px solid ${c['commandCenter.border']}; color: ${c['commandCenter.foreground']};
   border-radius: 6px; padding: 3px 120px; }
-.main { display: grid; grid-template-columns: 48px 240px 1fr; min-height: 0; }
+.main { display: grid; grid-template-columns: 48px ${extras ? 300 : 240}px 1fr; min-height: 0; }
+.view { border: 0; display: block; width: 100%; height: calc(100% - 57px); }
 .ab { background: ${c['activityBar.background']}; border-right: 1px solid ${c['activityBar.border']}; padding-top: 4px; }
 .ab div { height: 48px; display: flex; align-items: center; justify-content: center; color: ${c['activityBar.inactiveForeground']}; position: relative; }
 .ab div.on { color: ${c['activityBar.foreground']}; box-shadow: inset 2px 0 0 ${c['activityBar.activeBorder']}; }
@@ -168,8 +190,10 @@ body { width: 1200px; height: 860px; overflow: hidden; background: ${c['editor.b
 <div class="title"><div class="lights"><i style="background:#ff5f57"></i><i style="background:#febc2e"></i><i style="background:#28c840"></i></div>
 <div class="cc">north-pole</div></div>
 <div class="main">
-<div class="ab">${ICONS.map((s, i) => `<div class="${i === 0 ? 'on' : ''}">${s}${i === 2 ? '<span class="badge">3</span>' : ''}</div>`).join('')}</div>
-<div class="sb"><div class="sbt">EXPLORER</div><div class="sec">⌄ NORTH-POLE</div>${tree}</div>
+<div class="ab">${[...ICONS, MISTLETOE_ICON].map((s, i) => `<div class="${i === (extras ? 5 : 0) ? 'on' : ''}">${s}${i === 2 ? '<span class="badge">3</span>' : ''}</div>`).join('')}</div>
+<div class="sb">${extras
+    ? `<div class="sbt">MISTLETOE</div><div class="sec">⌄ CHRISTMAS COUNTDOWN</div><iframe class="view" srcdoc="${viewHtml(theme).replace(/&/g, '&amp;').replace(/"/g, '&quot;')}"></iframe>`
+    : `<div class="sbt">EXPLORER</div><div class="sec">⌄ NORTH-POLE</div>${tree}`}</div>
 <div class="ed">
 <div class="tabs"><div class="tab on">sleigh.ts <span class="dot"></span></div><div class="tab">gifts.json</div><div class="tab">snow.css</div></div>
 <div class="crumbs">src <span>›</span> <b>sleigh.ts</b> <span>›</span> <span style="color:${c['breadcrumb.foreground']}">Sleigh</span> <span>›</span> deliver</div>
@@ -177,7 +201,7 @@ body { width: 1200px; height: 860px; overflow: hidden; background: ${c['editor.b
 <div class="panel"><div class="ptabs"><span>PROBLEMS</span><span>OUTPUT</span><span class="on">TERMINAL</span><span>PORTS</span></div><div class="term">${term}</div></div>
 </div></div>
 <div class="status"><span class="remote">❄ North Pole</span><span>⎇ main*</span><span>⊗ 0 ⚠ 1</span>
-<span class="r"><span>Ln ${ACTIVE_LINE}, Col 58</span><span>Spaces: 2</span><span>UTF-8</span><span>TypeScript</span><span>${esc(theme.name)}</span></span></div>
+<span class="r">${extras ? `<span>Deck the halls with well-linted code ✨</span><span>${statusText(getCountdown(new Date(), 'christmasDay'))}</span>` : ''}<span>Ln ${ACTIVE_LINE}, Col 58</span><span>Spaces: 2</span><span>UTF-8</span><span>TypeScript</span><span>${esc(theme.name)}</span></span></div>
 </div></body></html>`;
 }
 
@@ -188,19 +212,27 @@ const themes = ['mistletoe-midnight', 'mistletoe-frost'].map((id) => ({
 
 const highlighter = await createHighlighter({ themes: themes.map((t) => t.json), langs: ['typescript'] });
 
-for (const { id, json } of themes) {
+const shots = [
+  ...themes.map((t) => ({ ...t, out: t.id.replace('mistletoe-', ''), extras: false })),
+  { ...themes[0], out: 'extras', extras: true },
+  { ...themes[1], out: 'extras-frost', extras: true },
+];
+
+for (const { id, json, out, extras } of shots) {
   const { tokens } = highlighter.codeToTokens(code, { lang: 'typescript', theme: json.name });
   const punct = json.tokenColors.find((t) => t.name === 'Punctuation').settings.foreground;
-  const htmlPath = join(root, 'images', `preview-${id}.html`);
-  const pngPath = join(root, 'images', `preview-${id.replace('mistletoe-', '')}.png`);
-  writeFileSync(htmlPath, page(json, renderCode(tokens, json.colors, punct)));
+  const htmlPath = join(root, 'images', `preview-${out}.html`);
+  const pngPath = join(root, 'images', `preview-${out}.png`);
+  writeFileSync(htmlPath, page(json, renderCode(tokens, json.colors, punct), extras));
   if (!existsSync(CHROME)) {
     console.log(`Wrote ${htmlPath} (set CHROME=... to also screenshot)`);
     continue;
   }
-  execFileSync(CHROME, [
-    '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=2',
-    '--window-size=1200,860', `--screenshot=${pngPath}`, `file://${htmlPath}`,
-  ], { stdio: 'ignore' });
+  // A little virtual time lets the snow and the countdown view start up before the capture.
+  const log = execFileSync(CHROME, [
+    '--headless=new', '--disable-gpu', '--hide-scrollbars', '--force-device-scale-factor=2', '--enable-logging=stderr', '--v=0',
+    '--virtual-time-budget=1500', '--window-size=1200,860', `--screenshot=${pngPath}`, `file://${htmlPath}`,
+  ], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
   console.log(`Wrote ${pngPath}`);
+  void log;
 }

@@ -2,7 +2,7 @@
 
 <h1 align="center">Mistletoe Theme</h1>
 
-<p align="center">A cozy Christmas color theme for VS Code. Evergreen nights, holly-berry keywords, gold-star functions, and brackets that light up like a string of fairy lights.</p>
+<p align="center">A cozy Christmas color theme for VS Code. Evergreen nights, holly-berry keywords, gold-star functions, brackets that light up like fairy lights, and a live countdown to Christmas with falling snow.</p>
 
 ## Mistletoe Midnight
 
@@ -12,7 +12,17 @@
 
 ![Mistletoe Frost](images/preview-frost.png)
 
-## Features
+## Festive extras
+
+![Christmas countdown view and status bar](images/preview-extras.png)
+
+- **Countdown to Christmas** in the status bar (`🎄 52 days to Christmas`), switching to hours and minutes on the final day.
+- **Rotating festive messages** that type themselves out in the status bar. Click one to skip to the next.
+- **Christmas Countdown view** (the mistletoe icon in the activity bar): a live clock, falling snow, a scrolling message banner, and 24 advent lights that switch on one per day through December.
+- **Christmas Eve mode** for countries that celebrate on the 24th.
+- Everything respects VS Code's **Reduce Motion** setting and can be switched off (see Settings).
+
+## Theme features
 
 - **Two variants**: *Midnight* (dark, deep evergreen) and *Frost* (light, warm fresh-snow paper).
 - **Christmas-light brackets**: nested bracket pairs cycle through gold, red, green, ice blue, candy pink and sugar plum.
@@ -26,6 +36,22 @@
 3. Run **Preferences: Color Theme** (`Ctrl+K Ctrl+T` / `Cmd+K Cmd+T`) and pick **Mistletoe Midnight** or **Mistletoe Frost**.
 
 Bracket pair colors use VS Code's built-in `editor.bracketPairColorization.enabled`, which is on by default.
+
+## Settings
+
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `mistletoe.countdown.enabled` | `true` | Countdown in the status bar |
+| `mistletoe.countdown.target` | `christmasDay` | `christmasDay` (25 Dec) or `christmasEve` (24 Dec) |
+| `mistletoe.ticker.enabled` | `true` | Rotating messages in the status bar |
+| `mistletoe.ticker.style` | `typewriter` | `typewriter` or `static` |
+| `mistletoe.ticker.intervalSeconds` | `15` | Seconds between messages |
+| `mistletoe.messages` | `[]` | Your own messages; `{days}` and `{target}` are filled in |
+| `mistletoe.snow.enabled` | `true` | Snow in the countdown view |
+
+Commands (in the Command Palette): **Mistletoe: Show Christmas Countdown**, **Mistletoe: Next Festive Message**, **Mistletoe: Toggle Status Bar Countdown and Messages**.
+
+The theme and the extras are independent: you can use the extras with any color theme, or turn them off and keep just the colors.
 
 ## Palette
 
@@ -47,6 +73,7 @@ Bracket pair colors use VS Code's built-in `editor.bracketPairColorization.enabl
 ```bash
 npm install
 npm run build     # regenerate themes/*.json from scripts/palettes.mjs (fails on low contrast)
+npm test          # countdown logic + extension smoke test
 npm run preview   # re-render the screenshots (needs Google Chrome)
 npm run package   # build a .vsix
 ```

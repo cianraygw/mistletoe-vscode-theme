@@ -1,8 +1,8 @@
 {
   "name": "mistletoe-theme",
   "displayName": "Mistletoe Theme",
-  "description": "A cozy Christmas color theme: evergreen nights, holly-berry keywords, gold-star functions, Christmas-light brackets and a fresh-snow light variant.",
-  "version": "1.0.0",
+  "description": "A cozy Christmas color theme with a live countdown to Christmas, falling snow, advent lights and rotating festive messages. Dark and light variants.",
+  "version": "1.1.0",
   "publisher": "cianray",
   "license": "MIT",
   "icon": "images/icon.png",
@@ -18,10 +18,11 @@
     "url": "https://github.com/cianraygw/mistletoe-vscode-theme/issues"
   },
   "engines": {
-    "vscode": "^1.70.0"
+    "vscode": "^1.74.0"
   },
   "categories": [
-    "Themes"
+    "Themes",
+    "Other"
   ],
   "keywords": [
     "christmas",
@@ -31,10 +32,16 @@
     "winter",
     "snow",
     "mistletoe",
+    "countdown",
+    "advent",
     "dark",
     "light",
     "theme",
     "color-theme"
+  ],
+  "main": "./src/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
   ],
   "contributes": {
     "themes": [
@@ -48,12 +55,110 @@
         "uiTheme": "vs",
         "path": "./themes/mistletoe-frost-color-theme.json"
       }
-    ]
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "mistletoe",
+          "title": "Mistletoe",
+          "icon": "images/activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "mistletoe": [
+        {
+          "type": "webview",
+          "id": "mistletoe.view",
+          "name": "Christmas Countdown",
+          "icon": "images/activity.svg"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "mistletoe.showCountdown",
+        "title": "Show Christmas Countdown",
+        "category": "Mistletoe"
+      },
+      {
+        "command": "mistletoe.nextMessage",
+        "title": "Next Festive Message",
+        "category": "Mistletoe"
+      },
+      {
+        "command": "mistletoe.toggleStatusBar",
+        "title": "Toggle Status Bar Countdown and Messages",
+        "category": "Mistletoe"
+      }
+    ],
+    "configuration": {
+      "title": "Mistletoe",
+      "properties": {
+        "mistletoe.countdown.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show the Christmas countdown in the status bar."
+        },
+        "mistletoe.countdown.target": {
+          "type": "string",
+          "enum": [
+            "christmasDay",
+            "christmasEve"
+          ],
+          "enumDescriptions": [
+            "Count down to 25 December.",
+            "Count down to 24 December, for countries that celebrate on Christmas Eve."
+          ],
+          "default": "christmasDay",
+          "description": "Which day the countdown runs to."
+        },
+        "mistletoe.ticker.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show rotating festive messages in the status bar."
+        },
+        "mistletoe.ticker.style": {
+          "type": "string",
+          "enum": [
+            "typewriter",
+            "static"
+          ],
+          "enumDescriptions": [
+            "Type each message out letter by letter.",
+            "Swap messages without animation."
+          ],
+          "default": "typewriter",
+          "description": "How status bar messages appear."
+        },
+        "mistletoe.ticker.intervalSeconds": {
+          "type": "number",
+          "default": 15,
+          "minimum": 3,
+          "maximum": 3600,
+          "description": "Seconds between messages."
+        },
+        "mistletoe.messages": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "default": [],
+          "markdownDescription": "Your own festive messages. Leave empty to use the built-in ones. `{days}` becomes the number of sleeps left and `{target}` becomes *Christmas* or *Christmas Eve*."
+        },
+        "mistletoe.snow.enabled": {
+          "type": "boolean",
+          "default": true,
+          "description": "Let it snow in the Christmas Countdown view."
+        }
+      }
+    }
   },
   "scripts": {
     "build": "node scripts/build.mjs",
     "preview": "node scripts/preview.mjs",
-    "package": "npm run build && vsce package",
+    "test": "node --test test/*.test.js",
+    "package": "npm run build && npm test && vsce package",
     "publish:vsce": "npm run build && vsce publish",
     "publish:ovsx": "npm run build && ovsx publish"
   },

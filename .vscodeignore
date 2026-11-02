@@ -6,3 +6,4 @@ images/*.html
 images/icon.svg
 images/preview-*.png
 *.vsix
+test/**
