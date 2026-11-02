@@ -1,0 +1,8 @@
+.vscode/**
+.gitignore
+node_modules/**
+scripts/**
+images/*.html
+images/icon.svg
+images/preview-*.png
+*.vsix

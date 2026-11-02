@@ -1,0 +1,4 @@
+node_modules/
+*.vsix
+images/*.html
+.DS_Store
