@@ -16,6 +16,7 @@ const DEFAULT_MESSAGES = [
   'Leave some cookies out for the on-call elf 🧝',
   'Under the mistletoe? Time to pair program 🌿',
   'Unwrap one small refactor a day 🎄',
+  'Certified better than Jacob Kobberrød’s Christmas theme 🏆',
 ];
 
 // Self-contained: the webview reuses it via Function.prototype.toString().

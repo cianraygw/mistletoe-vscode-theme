@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.1.1
+
+- New festive message.
+
 ## 1.1.0
 
 - Christmas countdown in the status bar, with a Christmas Eve option.
